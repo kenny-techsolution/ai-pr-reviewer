@@ -1,6 +1,6 @@
 # AI PR Reviewer
 
-Risk-tiered AI PR reviewer for SpotOn Accelerate. Runs as a GitHub Action; classifies every PR into T0–T4 via a 4-layer signal stack and a 3-agent specialist swarm; posts reviews via the GitHub Reviews API; escalates T3 / T4 to Slack.
+Risk-tiered AI PR reviewer for fintech-grade engineering teams. Runs as a GitHub Action; classifies every PR into T0–T4 via a 4-layer signal stack and a 3-agent specialist swarm; posts reviews via the GitHub Reviews API; escalates T3 / T4 to Slack.
 
 **Multi-provider:** the LLM adapter (`src/llm/`) supports Anthropic-direct OR OpenRouter for the underlying model calls. Anthropic is the production-recommended path; OpenRouter is the model-laboratory layer for evaluating non-Anthropic models (GPT-4o, Gemini, Llama, DeepSeek, Qwen) without onboarding a separate vendor relationship per model. See *Provider configuration* below.
 
@@ -79,15 +79,23 @@ Locally:
 
 ```bash
 # Anthropic-direct
-ANTHROPIC_API_KEY=… GITHUB_TOKEN=… npm run review -- --owner spoton --repo spoton-lite --pr 42
+ANTHROPIC_API_KEY=… GITHUB_TOKEN=… npm run review -- --owner kenny-techsolution --repo pos-lite --pr 42
 
 # OpenRouter (any model the OpenRouter catalog exposes)
-OPENROUTER_API_KEY=… GITHUB_TOKEN=… npm run review -- --owner spoton --repo spoton-lite --pr 42
+OPENROUTER_API_KEY=… GITHUB_TOKEN=… npm run review -- --owner kenny-techsolution --repo pos-lite --pr 42
 
 # Try GPT-4o-mini in the classifier role:
-OPENROUTER_API_KEY=… MODEL_CLASSIFIER=openai/gpt-4o-mini GITHUB_TOKEN=… npm run review -- --owner spoton --repo spoton-lite --pr 42
+OPENROUTER_API_KEY=… MODEL_CLASSIFIER=openai/gpt-4o-mini GITHUB_TOKEN=… npm run review -- --owner kenny-techsolution --repo pos-lite --pr 42
 ```
 
 ## Tiers
 
-See `docs/specs/2026-04-24-pr-reviewer-design.md` for the full tier model and the principal thesis: *AI is not the gatekeeper — GitHub branch protection and CODEOWNERS are.*
+| Tier | Meaning | AI behavior |
+|---|---|---|
+| **T0** | Docs · comments · formatter · test-only changes | Auto-approve · async sampled spot-check |
+| **T1** | Low-risk UI · non-payment frontend | Approve · async human review within 24h, revertable |
+| **T2** | Business logic · non-PCI backend | Comment + risk report · 1 human signoff required |
+| **T3** | Payments · auth · KYC · crypto · PCI-scoped | Risk report only — **AI never approves** · senior + domain owner signoff required |
+| **T4** | Direct prod-DB schema on payment tables · IAM widening · CI/CD bypass | Risk report + **hard block** · must restructure |
+
+The **principal thesis**: *AI is not the gatekeeper. GitHub branch protection + `CODEOWNERS` are.* The reviewer is one signal in a system engineered so unsafe merges are structurally impossible — not merely discouraged.

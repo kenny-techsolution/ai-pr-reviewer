@@ -4,7 +4,7 @@
  * Cheapest layer. Pure glob matching against an explicit ordered rule set —
  * no language model involvement, deterministic, sub-millisecond.
  *
- * The rules below mirror SpotOn-lite's CODEOWNERS structure but are kept
+ * The rules below mirror pos-lite's CODEOWNERS structure but are kept
  * separate so they can evolve at the reviewer's pace (e.g., when a new
  * PCI-adjacent path is discovered via audit retrace).
  */

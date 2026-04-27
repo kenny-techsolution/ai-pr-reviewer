@@ -91,7 +91,7 @@ export class OpenAIClient implements LlmClient {
       baseURL: cfg.baseURL ?? "https://openrouter.ai/api/v1",
       defaultHeaders: {
         ...(cfg.appUrl ? { "HTTP-Referer": cfg.appUrl } : {}),
-        ...(cfg.appName ? { "X-Title": cfg.appName } : { "X-Title": "SpotOn AI PR Reviewer" }),
+        ...(cfg.appName ? { "X-Title": cfg.appName } : { "X-Title": "AI PR Reviewer" }),
       },
     });
   }

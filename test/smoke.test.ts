@@ -14,7 +14,7 @@ import { ChangedFile, PRContext } from "../src/types/index.js";
 
 function fakePR(files: ChangedFile[], title = "Test PR"): PRContext {
   return {
-    owner: "test", repo: "spoton-lite", prNumber: 1, title, body: "",
+    owner: "test", repo: "pos-lite", prNumber: 1, title, body: "",
     baseRef: "main", headRef: "feature", headSha: "abc123",
     author: "alice", files,
   };

@@ -1,7 +1,7 @@
 {
-  "name": "@spoton/ai-pr-reviewer",
+  "name": "@kenny-techsolution/ai-pr-reviewer",
   "version": "0.1.0",
-  "description": "Risk-tiered AI PR reviewer for the SpotOn Accelerate team.",
+  "description": "Risk-tiered AI PR reviewer · TypeScript · multi-provider LLM adapter (Anthropic / OpenRouter).",
   "private": true,
   "type": "module",
   "bin": {
