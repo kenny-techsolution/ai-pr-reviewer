@@ -40,10 +40,17 @@ export async function runLayerStack(files: ChangedFile[]): Promise<LayerStackRes
 
   // Should layer 5 (LLM) fire? Yes if:
   //   - path layer didn't match any rule (ambiguous), OR
+  //   - path classified T0 but only matched some of the files — the
+  //     unmatched files could be anything (auth, payments, business logic)
+  //     and a single T0-rule file (e.g. a test or .md) shouldn't drag the
+  //     PR's classification down. Critical for repos whose path structure
+  //     wasn't part of the rule calibration. OR
   //   - semantic risk exceeds path-implied risk by 2+ levels (escalation candidate), OR
   //   - diff layer found critical-level signals that path didn't catch
+  const allFilesMatched = path.findings.length >= files.length;
   const llmShouldFire =
     path.highest_tier === null ||
+    (path.highest_tier === "T0" && !allFilesMatched) ||
     riskGap(semantic.risk, path.risk) >= 2 ||
     riskRank(diff.risk) >= riskRank("critical");
 

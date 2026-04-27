@@ -89,7 +89,8 @@ export interface SignalFinding {
 // =============================================================================
 export const AgentFindingSchema = z.object({
   path: z.string(),
-  line: z.number().optional(),
+  // LLMs occasionally return `null` instead of omitting the field; accept both.
+  line: z.number().nullable().optional(),
   severity: z.enum(["info", "warn", "block"]),
   category: z.string(), // e.g. "secret-exposure" | "rounding" | "missing-validation"
   message: z.string(),
