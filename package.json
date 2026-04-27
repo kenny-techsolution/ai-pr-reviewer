@@ -1,0 +1,32 @@
+{
+  "name": "@spoton/ai-pr-reviewer",
+  "version": "0.1.0",
+  "description": "Risk-tiered AI PR reviewer for the SpotOn Accelerate team.",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "ai-review": "./dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "tsx src/cli.ts",
+    "review": "tsx src/cli.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test test/*.test.ts"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.32.0",
+    "@octokit/rest": "^21.0.0",
+    "minimatch": "^10.0.1",
+    "openai": "^4.77.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
