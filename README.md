@@ -72,7 +72,10 @@ In a GitHub Action:
     # Pick ONE of these — both are supported:
     ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
     # OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
-    SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+    # Slack webhooks — channel-routed (set the channel-specific ones in production):
+    SLACK_WEBHOOK_PAYMENTS: ${{ secrets.SLACK_WEBHOOK_PAYMENTS }}
+    SLACK_WEBHOOK_SECURITY: ${{ secrets.SLACK_WEBHOOK_SECURITY }}
+    SLACK_WEBHOOK_URL:      ${{ secrets.SLACK_WEBHOOK_URL }}    # fallback / single-channel
 ```
 
 Locally:

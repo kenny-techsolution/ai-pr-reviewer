@@ -1,9 +1,17 @@
 /**
  * Slack incoming-webhook emitter for T3 / T4 escalation.
  *
- * No interactive Block Kit buttons — keeping the demo lean. Production
- * version would use a Slack App with `chat.postMessage` for richer
- * interactivity (Approve / Snooze buttons, threaded replies).
+ * Multi-channel webhook routing — the aggregator picks a target channel based
+ * on file paths (`#payments-review` vs `#security` vs `#eng-reviews`). This
+ * emitter then resolves the channel to the matching webhook URL via env:
+ *
+ *   SLACK_WEBHOOK_PAYMENTS     → bound to #payments-review
+ *   SLACK_WEBHOOK_SECURITY     → bound to #security
+ *   SLACK_WEBHOOK_URL          → fallback (used when channel-specific not set)
+ *
+ * Production would replace this with a Slack App + `chat.postMessage` for
+ * dynamic channel routing per message + interactive Block Kit buttons
+ * (Approve / Snooze / threaded replies).
  */
 
 import { Decision, PRContext } from "../types/index.js";
@@ -14,6 +22,16 @@ export interface SlackEmitterResult {
   error?: string;
 }
 
+/** Resolve channel name → bound webhook URL via env. */
+function pickWebhook(channel: string | undefined): string | undefined {
+  if (channel === "#payments-review" && process.env.SLACK_WEBHOOK_PAYMENTS) return process.env.SLACK_WEBHOOK_PAYMENTS;
+  if (channel === "#security"        && process.env.SLACK_WEBHOOK_SECURITY) return process.env.SLACK_WEBHOOK_SECURITY;
+  // Fallback chain: generic URL → either specific webhook (whichever's set)
+  return process.env.SLACK_WEBHOOK_URL
+      ?? process.env.SLACK_WEBHOOK_PAYMENTS
+      ?? process.env.SLACK_WEBHOOK_SECURITY;
+}
+
 export async function postSlackEscalation(
   ctx: PRContext,
   decision: Decision,
@@ -21,9 +39,12 @@ export async function postSlackEscalation(
   if (!decision.escalate_slack) {
     return { posted: false };
   }
-  const webhook = process.env.SLACK_WEBHOOK_URL;
+  const webhook = pickWebhook(decision.slack_channel);
   if (!webhook) {
-    return { posted: false, error: "SLACK_WEBHOOK_URL not set — skipping Slack escalation" };
+    return {
+      posted: false,
+      error: "No Slack webhook env set — skipping. Set SLACK_WEBHOOK_PAYMENTS / SLACK_WEBHOOK_SECURITY for channel-routed escalation, or SLACK_WEBHOOK_URL as a single-channel fallback.",
+    };
   }
 
   const prUrl = `https://github.com/${ctx.owner}/${ctx.repo}/pull/${ctx.prNumber}`;
