@@ -60,35 +60,46 @@ export async function postGithubReview(
     body: c.body,
   }));
 
-  try {
+  // Inner helper so we can retry with different params without nesting deeply.
+  async function tryPost(
+    eventArg: typeof event,
+    bodyArg: string,
+    commentsArg: typeof reviewComments,
+  ): Promise<GithubEmitterResult> {
     const resp = await octokit.pulls.createReview({
       owner: ctx.owner,
       repo: ctx.repo,
       pull_number: ctx.prNumber,
       commit_id: ctx.headSha,
-      body: decision.body,
-      event,
-      comments: reviewComments,
+      body: bodyArg,
+      event: eventArg,
+      comments: commentsArg,
     });
     return { posted: true, review_id: resp.data.id };
+  }
+
+  try {
+    return await tryPost(event, decision.body, reviewComments);
   } catch (err) {
     const msg = (err as Error).message ?? "";
 
-    // Graceful fallback for the GitHub Actions APPROVE policy
+    // Fallback A: GitHub Actions can't APPROVE — downgrade to COMMENT
     if (event === "APPROVE" && /not permitted to approve/i.test(msg)) {
       try {
-        const resp = await octokit.pulls.createReview({
-          owner: ctx.owner,
-          repo: ctx.repo,
-          pull_number: ctx.prNumber,
-          commit_id: ctx.headSha,
-          body: APPROVE_FALLBACK_NOTE + decision.body,
-          event: "COMMENT",
-          comments: reviewComments,
-        });
-        return { posted: true, review_id: resp.data.id, fallback: "approve-to-comment" };
+        const result = await tryPost("COMMENT", APPROVE_FALLBACK_NOTE + decision.body, reviewComments);
+        return { ...result, fallback: "approve-to-comment" };
       } catch (err2) {
         return { posted: false, error: `GitHub fallback (approve→comment) failed: ${(err2 as Error).message}` };
+      }
+    }
+
+    // Fallback B: a line-level comment references an unreachable line — retry without inline comments
+    if (/Line could not be resolved/i.test(msg) && reviewComments.length > 0) {
+      try {
+        const note = "> ⚠️ AI line-comments dropped — one or more referenced lines outside the diff range. The summary review below still applies.\n\n---\n\n";
+        return await tryPost(event, note + decision.body, []);
+      } catch (err2) {
+        return { posted: false, error: `GitHub fallback (drop-line-comments) failed: ${(err2 as Error).message}` };
       }
     }
 

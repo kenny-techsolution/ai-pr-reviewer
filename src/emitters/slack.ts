@@ -22,14 +22,17 @@ export interface SlackEmitterResult {
   error?: string;
 }
 
-/** Resolve channel name → bound webhook URL via env. */
+/** Resolve channel name → bound webhook URL via env.
+ *  Note: GitHub Actions injects unset secrets as empty strings, not undefined.
+ *  We coerce empty → undefined so the `??` chain works correctly. */
 function pickWebhook(channel: string | undefined): string | undefined {
-  if (channel === "#payments-review" && process.env.SLACK_WEBHOOK_PAYMENTS) return process.env.SLACK_WEBHOOK_PAYMENTS;
-  if (channel === "#security"        && process.env.SLACK_WEBHOOK_SECURITY) return process.env.SLACK_WEBHOOK_SECURITY;
+  const payments = process.env.SLACK_WEBHOOK_PAYMENTS || undefined;
+  const security = process.env.SLACK_WEBHOOK_SECURITY || undefined;
+  const fallback = process.env.SLACK_WEBHOOK_URL      || undefined;
+  if (channel === "#payments-review" && payments) return payments;
+  if (channel === "#security"        && security) return security;
   // Fallback chain: generic URL → either specific webhook (whichever's set)
-  return process.env.SLACK_WEBHOOK_URL
-      ?? process.env.SLACK_WEBHOOK_PAYMENTS
-      ?? process.env.SLACK_WEBHOOK_SECURITY;
+  return fallback ?? payments ?? security;
 }
 
 export async function postSlackEscalation(
